@@ -104,6 +104,19 @@ void cadastrarCurso(Lista *listaCursos, int cursoNovo){
 	}
 }
 
+void listarAlunos(Lista *listaAlunos){
+	if (listaAlunos->primeiro == NULL) {
+		printf("Lista de alunos vazia.\n");
+		return;
+	}
+	
+	printf("Lista de Alunos:\n");
+	No *atual = listaAlunos->primeiro;
+	while (atual != NULL) {
+		printf("Nome: %s, Matricula: %d\n", atual->aluno.nome, atual->aluno.matricula);
+		atual = atual->proximo;
+	}
+}
 //  ------  Funções reservadas -----
 /*
 void removerAluno(Lista *lista, int matricula);
@@ -144,6 +157,7 @@ int main(void){
 					case 1: 
 						cadastrarAluno(&listaAlunos, matriculaNova);
 						matriculaNova++;
+						listarAlunos(&listaAlunos);
 						break;
 						
 					case 2: 
