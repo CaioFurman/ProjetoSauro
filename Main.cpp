@@ -2,12 +2,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <conio.h>
-
 
 //Projeto SAURO
 
 int totalAlunos = 0;
+int totalCursos = 0;
 
 typedef struct aluno {
     int matricula;
@@ -92,7 +91,8 @@ int main(void) {
 
                             case 4:
                                 salvarMatriculas(&listaAlunos);
-    							break;
+                                break;
+
                             case 5:
                                 break;
                         }
@@ -170,7 +170,38 @@ void cadastrarAluno(Lista *listaAlunos, int *matriculaNova) {
 
 // Função para cadastrar curso (exclusivo do administrador)
 void cadastrarCurso(Lista *listaCursos, int *cursoNovo) {
-    // Implementação da função de cadastro de curso
+    Curso novoCurso;
+
+    printf("==========\n Cadastro de Curso\n\n");
+    printf("Nome do curso: ");
+    scanf("%s", novoCurso.nome);
+
+    printf("Turno do curso: ");
+    scanf("%s", novoCurso.turno);
+
+    printf("Valor da mensalidade: ");
+    scanf("%f", &novoCurso.mensalidade);
+
+    novoCurso.idCurso = (*cursoNovo)++;
+    
+    No *novoNo = (No *)malloc(sizeof(No));
+    if (novoNo == NULL) {
+        printf("\nErro: Memoria insuficiente!\n");
+        exit(1);
+    }
+    
+    novoNo->curso = novoCurso;
+    novoNo->proximo = NULL;
+
+    if (listaCursos->primeiro == NULL) {
+        listaCursos->primeiro = novoNo;
+        listaCursos->ultimo = novoNo;
+    } else {
+        listaCursos->ultimo->proximo = novoNo;
+        listaCursos->ultimo = novoNo;
+    }
+
+    printf("\nCurso cadastrado com sucesso!\n");
 }
 
 // Função para listar alunos (exclusivo do administrador)
@@ -270,3 +301,4 @@ void salvarMatriculas(Lista *listaAlunos) {
     fclose(arquivo);
     printf("Matriculas dos alunos salvas com sucesso!\n");
 }
+
