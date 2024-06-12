@@ -1,3 +1,1 @@
-1 "engenharia de software" "noite" 1700.00
-2 "medicina" "manha" 10000.00
-3 "fisioterapia" "tarde" 1500.00
+1 engenharia manha 30000.00
