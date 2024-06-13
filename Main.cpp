@@ -259,7 +259,7 @@ void listarAlunos(Lista *listaAlunos) {
     printf("Lista de Alunos:\n");
     No *atual = listaAlunos->primeiro;
     while (atual != NULL) {
-        printf("Matricula: %d, Nome: %s\n", atual->aluno.matricula, atual->aluno.nome);
+        printf("Matricula: %d, Nome: %s, Curso: %d, Pagamento: %d\n", atual->aluno.matricula, atual->aluno.nome, atual->aluno.idCurso, atual->aluno.pagamento);
         atual = atual->proximo;
     }
 }
