@@ -825,7 +825,7 @@ void listarInadimplentes(Lista *listaAlunos) {
     No *atual = listaAlunos->primeiro;
     while (atual != NULL) {
     	if (atual->aluno.pagamento == 1) {
-            printf("Matricula: %d Nome: %s IdCurso: %d Data Mensalidade: %02d-%02d-%04d\n", atual->aluno.matricula, atual->aluno.nome, atual->aluno.idCurso, atual->aluno.pagamento, atual->aluno.dataMensalidade.tm_mday, atual->aluno.dataMensalidade.tm_mon+ 1, atual->aluno.dataMensalidade.tm_year + 1900);
+            printf("Matricula: %d Nome: %s IdCurso: %d PAGAMENTO ATRASADO\n", atual->aluno.matricula, atual->aluno.nome, atual->aluno.idCurso, atual->aluno.pagamento);
         }
         atual = atual->proximo;
     }
