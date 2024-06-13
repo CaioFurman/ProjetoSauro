@@ -1,17 +1,2 @@
-0 joao
-1 lucas
-2 joao
-3 caio
-4 lucas
-5 ana
-6 beatriz
-0 joao
-1 lucas
-2 joao
-3 caio
-4 lucas
-5 ana
-6 beatriz
-7 jorge
-8 dyhogo
-9 pablo
+1 caio 0 0
+2 pietro 2 0

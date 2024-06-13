@@ -1,1 +1,2 @@
-1 engenharia manha 30000.00
+1 sociologia manha 1345
+2 engenharia noite 4550

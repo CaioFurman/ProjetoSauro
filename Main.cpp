@@ -2,22 +2,24 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <time.h>
 
 //PROJETO SAURO
 
-// Definições das estruturas
+// DefiniÃ§Ãµes das estruturas
 typedef struct aluno {
     int matricula;
     char nome[50];
     int idCurso;
     bool pagamento;
+    struct tm dataMensalidade;
 } Aluno;
 
 typedef struct curso {
     int idCurso;
     char nome[50];
     char turno[10];
-    float mensalidade;
+    int mensalidade;
 } Curso;
 
 typedef struct no {
@@ -31,39 +33,41 @@ typedef struct lista {
     No *ultimo;
 } Lista;
 
-// Protótipos de funções
+// ProtÃ³tipos de funÃ§Ãµes
 void cadastrarAluno(Lista *listaAlunos);
 void cadastrarCurso(Lista *listaCursos);
 void listarAlunos(Lista *listaAlunos);
 void listarCursos(Lista *listaCursos);
 bool loginAdmin();
-bool loginAluno(Lista *listaAlunos);
+int loginAluno(Lista *listaAlunos, Lista *listaCursos);
 void salvarMatriculas(Lista *listaAlunos);
 void salvarCursos(Lista *listaCursos);
 bool verificarMatriculaSalva(int matricula);
 void adicionarMatriculaSalva(int matricula);
-int carregarUltimaMatricula();
+int carregarUltimoId(Lista *lista, int opcao);
 void salvarUltimaMatricula(int matricula);
 void carregarMatriculasSalvas(Lista *listaAlunos);
 void carregarCursosSalvos(Lista *listaCursos);
+void efetuarPagamento(Lista *listaAlunos, Lista *listaCursos, int matricula);
+bool matricularAluno(Lista *listaCursos, Lista *listaAlunos, int matricula, int idCurso);
+No* encontrarCurso(Lista *listaCursos, int id);
+No* encontrarAluno(Lista *listaAlunos, int matricula);
 
-// Função principal
+// FunÃ§Ã£o principal
 int main(void) {
     bool continuar = true;
     int escolha;
+    int matricula = 0;
 
-    // Inicialização das listas
+    // InicializaÃ§Ã£o das listas
     Lista listaAlunos = {NULL, NULL};
     Lista listaCursos = {NULL, NULL};
 
-    // Carregar matrículas salvas
+    // Carregar matrÃ­culas salvas
     carregarMatriculasSalvas(&listaAlunos);
     
      // Carregar cursos salvos
     carregarCursosSalvos(&listaCursos);
-
-
-    int matriculaNova = carregarUltimaMatricula() + 1;
 
     while (continuar) {
         printf("==========\n Bem-vindo ao Sistema de Gestao Academica\n\n");
@@ -86,9 +90,7 @@ int main(void) {
                         printf("  2. Cadastrar curso\n");
                         printf("  3. Listar alunos\n");
                         printf("  4. Listar cursos\n");
-                        printf("  5. Salvar ultimos alunos cadastrados.\n");
-                        printf("  6. Salvar cursos cadastrados.\n");
-                        printf("  7. Sair como admin\n\n");
+                        printf("  5. Sair como admin\n\n");
                         printf("Opcao selecionada: ");
                         scanf("%d", &escolha);
                         system("cls");
@@ -111,19 +113,13 @@ int main(void) {
                                 break;
 
                             case 5:
-                                salvarMatriculas(&listaAlunos);
-                                break;
-
-                            case 6:
-                                salvarCursos(&listaCursos);
-                                break;
-
-                            case 7:
-                                continuar = false; // Sair do loop do administrador e voltar ao menu principal
+                            	salvarMatriculas(&listaAlunos);
+								salvarCursos(&listaCursos);
+                                continuar = false;
                                 break;
                         }
 
-                        if (escolha == 7) {
+                        if (escolha == 5) {
                             break;
                         }
                     }
@@ -131,13 +127,14 @@ int main(void) {
                 break;
 
             case 2:
-                if (loginAluno(&listaAlunos)) {
+            	matricula = loginAluno(&listaAlunos, &listaCursos);
+                if (matricula != 0) {
                     // Menu do aluno
                     while (1) {
                         printf("==========\n Menu do Aluno\n\n");
                         printf(" Escolha uma das opcoes a seguir:\n");
-                        printf("  1. Visualizar cursos disponiveis\n");
-                        printf("  2. Escolher curso e pagar mensalidade\n");
+                        printf("  1. Cursos disponiveis\n");
+                        printf("  2. Pagar mensalidade\n");
                         printf("  3. Sair como aluno\n\n");
                         printf("Opcao selecionada: ");
                         scanf("%d", &escolha);
@@ -146,13 +143,20 @@ int main(void) {
                         switch (escolha) {
                             case 1:
                                 listarCursos(&listaCursos);
+                                int idCurso;
+                                
+                                printf("\nEscolha um curso para matricular pelo id: ");
+                                scanf("%d", &idCurso);
+                                matricularAluno(&listaCursos, &listaAlunos, matricula, idCurso);
                                 break;
 
                             case 2:
-                                // Implemente aqui a lógica para escolher um curso e pagar a mensalidade
+                            	efetuarPagamento(&listaAlunos, &listaCursos, matricula);
                                 break;
 
                             case 3:
+                            	salvarMatriculas(&listaAlunos);
+								salvarCursos(&listaCursos);
                                 continuar = false; // Sair do loop do aluno e voltar ao menu principal
                                 break;
                         }
@@ -177,14 +181,14 @@ int main(void) {
     return 0;
 }
 
-// Função para cadastrar aluno (exclusivo do administrador)
+// FunÃ§Ã£o para cadastrar aluno (exclusivo do administrador)
 void cadastrarAluno(Lista *listaAlunos) {
     printf("==========\n Cadastro de Aluno\n\n");
     printf("Nome: ");
     char nome[50];
     scanf("%s", nome);
 
-    // Caso o aluno não esteja cadastrado, cria um novo registro
+    // Caso o aluno nÃ£o esteja cadastrado, cria um novo registro
     No *novoNo = (No *)malloc(sizeof(No));
     if (novoNo == NULL) {
         printf("\nErro: Memoria insuficiente!\n");
@@ -192,12 +196,12 @@ void cadastrarAluno(Lista *listaAlunos) {
     }
 
     strcpy(novoNo->aluno.nome, nome);
-    novoNo->aluno.matricula = carregarUltimaMatricula();
+    novoNo->aluno.matricula = carregarUltimoId(listaAlunos, 1);
     novoNo->aluno.idCurso = 0;
     novoNo->aluno.pagamento = false;
     novoNo->proximo = NULL;
 
-    // Insere o novo nó na lista de alunos
+    // Insere o novo nÃ³ na lista de alunos
     if (listaAlunos->primeiro == NULL) {
         listaAlunos->primeiro = novoNo;
         listaAlunos->ultimo = novoNo;
@@ -208,11 +212,11 @@ void cadastrarAluno(Lista *listaAlunos) {
 
     printf("\nAluno cadastrado com sucesso!\n");
 
-    // Incrementa a matrícula
-    salvarUltimaMatricula(novoNo->aluno.matricula + 1);
+    // Incrementa a matrÃ­cula
+    //salvarUltimaMatricula(novoNo->aluno.matricula + 1);
 }
 
-// Função para cadastrar curso (exclusivo do administrador)
+// FunÃ§Ã£o para cadastrar curso (exclusivo do administrador)
 void cadastrarCurso(Lista *listaCursos) {
     Curso novoCurso;
 
@@ -228,7 +232,7 @@ void cadastrarCurso(Lista *listaCursos) {
     printf("Valor da mensalidade: ");
     scanf("%f", &novoCurso.mensalidade);
 
-    novoCurso.idCurso = listaCursos->ultimo != NULL ? listaCursos->ultimo->curso.idCurso + 1 : 1;
+    novoCurso.idCurso = carregarUltimoId(listaCursos, 2);
     
     No *novoNo = (No *)malloc(sizeof(No));
     if (novoNo == NULL) {
@@ -250,7 +254,7 @@ void cadastrarCurso(Lista *listaCursos) {
     printf("\nCurso cadastrado com sucesso!\n");
 }
 
-// Função para listar alunos (exclusivo do administrador)
+// FunÃ§Ã£o para listar alunos (exclusivo do administrador)
 void listarAlunos(Lista *listaAlunos) {
     printf("Lista de Alunos:\n");
     No *atual = listaAlunos->primeiro;
@@ -260,12 +264,12 @@ void listarAlunos(Lista *listaAlunos) {
     }
 }
 
-// Função para listar cursos (exclusivo do administrador)
+// FunÃ§Ã£o para listar cursos (exclusivo do administrador)
 void listarCursos(Lista *listaCursos) {
     printf("Lista de Cursos:\n");
     No *atual = listaCursos->primeiro;
     while (atual != NULL) {
-        printf("ID: %d, Nome: %s, Turno: %s, Mensalidade: %.2f\n", atual->curso.idCurso, atual->curso.nome, atual->curso.turno, atual->curso.mensalidade);
+        printf("ID: %d, Nome: %s, Turno: %s, Mensalidade: %d\n", atual->curso.idCurso, atual->curso.nome, atual->curso.turno, atual->curso.mensalidade);
         atual = atual->proximo;
     }
 }
@@ -281,18 +285,18 @@ bool loginAdmin() {
     printf("Password: ");
     scanf("%s", password);
 
-    // autenticação
+    // autenticaÃ§Ã£o
     if (strcmp(username, "admin") == 0 && strcmp(password, "admin123") == 0) {
         printf("\nLogin de administrador bem-sucedido!\n");
         return true;
     } else {
-        printf("\nCredenciais inválidas. Tente novamente.\n");
+        printf("\nCredenciais invalidas. Tente novamente.\n");
         return false;
     }
 }
 
 // autenticar aluno
-bool loginAluno(Lista *listaAlunos) {
+int loginAluno(Lista *listaAlunos, Lista *listaCursos) {
     int matricula;
     char nome[50];
 
@@ -305,22 +309,25 @@ bool loginAluno(Lista *listaAlunos) {
     No *atual = listaAlunos->primeiro;
     while (atual != NULL) {
         if (atual->aluno.matricula == matricula && strcmp(atual->aluno.nome, nome) == 0) {
+        	No *cursoNode = encontrarCurso(listaCursos, atual->aluno.idCurso);
+        	char cursoNome[50] = "Sem curso";
+        	if (cursoNode != NULL) {
+        		strcpy(cursoNome, cursoNode->curso.nome);
+			}
             printf("\nLogin de aluno bem-sucedido!\n");
-            return true;
+            printf("Aluno: %s, Curso: %s, Dias ate o vencimento da mensalidade: %d, pagamento em dia: %d\n\n", atual->aluno.nome, cursoNome, 0, atual->aluno.pagamento);
+            return matricula;
         }
         atual = atual->proximo;
     }
 
     printf("\nAluno nao cadastrado ou credenciais incorretas. Entre em contato com o administrador.\n");
-    return false;
+    return 0;
 }
-
-// Lista para armazenar as matrículas já salvas
-Lista matriculasSalvas = {NULL, NULL};
 
 void salvarMatriculas(Lista *listaAlunos) {
     FILE *arquivo;
-    arquivo = fopen("matriculas.txt", "a"); // Modo de adição ao invés de escrita
+    arquivo = fopen("matriculas.txt", "w"); // Modo de adiÃ§Ã£o ao invÃ©s de escrita
     if (arquivo == NULL) {
         printf("Erro ao abrir o arquivo para escrita.\n");
         return;
@@ -328,12 +335,7 @@ void salvarMatriculas(Lista *listaAlunos) {
 
     No *atual = listaAlunos->primeiro;
     while (atual != NULL) {
-        // Verifica se a matrícula atual já foi salva
-        if (!verificarMatriculaSalva(atual->aluno.matricula)) {
-            fprintf(arquivo, "%d %s\n", atual->aluno.matricula, atual->aluno.nome);
-            // Adiciona a matrícula à lista de matrículas salvas
-            adicionarMatriculaSalva(atual->aluno.matricula);
-        }
+        fprintf(arquivo, "%d %s %d %d\n", atual->aluno.matricula, atual->aluno.nome, atual->aluno.idCurso, atual->aluno.pagamento);
         atual = atual->proximo;
     }
 
@@ -341,7 +343,7 @@ void salvarMatriculas(Lista *listaAlunos) {
     printf("Matriculas dos alunos salvas com sucesso!\n");
 }
 
-// Função para salvar cursos cadastrados
+// FunÃ§Ã£o para salvar cursos cadastrados
 void salvarCursos(Lista *listaCursos) {
     FILE *arquivo;
     arquivo = fopen("cursos.txt", "w");
@@ -352,7 +354,7 @@ void salvarCursos(Lista *listaCursos) {
 
     No *atual = listaCursos->primeiro;
     while (atual != NULL) {
-        fprintf(arquivo, "%d %s %s %.2f\n", atual->curso.idCurso, atual->curso.nome, atual->curso.turno, atual->curso.mensalidade);
+        fprintf(arquivo, "%d %s %s %d\n", atual->curso.idCurso, atual->curso.nome, atual->curso.turno, atual->curso.mensalidade);
         atual = atual->proximo;
     }
 
@@ -360,66 +362,7 @@ void salvarCursos(Lista *listaCursos) {
     printf("Cursos cadastrados salvos com sucesso!\n");
 }
 
-// Função para verificar se uma matrícula já foi salva
-bool verificarMatriculaSalva(int matricula) {
-    No *atual = matriculasSalvas.primeiro;
-    while (atual != NULL) {
-        if (atual->aluno.matricula == matricula) {
-            return true; // Matrícula já foi salva
-        }
-        atual = atual->proximo;
-    }
-    return false; // Matrícula ainda não foi salva
-}
-
-// Função para adicionar uma matrícula à lista de matrículas salvas
-void adicionarMatriculaSalva(int matricula) {
-    No *novoNo = (No *)malloc(sizeof(No));
-    if (novoNo == NULL) {
-        printf("\nErro: Memoria insuficiente!\n");
-        exit(1);
-    }
-    novoNo->aluno.matricula = matricula;
-    novoNo->proximo = NULL;
-
-    if (matriculasSalvas.primeiro == NULL) {
-        matriculasSalvas.primeiro = novoNo;
-        matriculasSalvas.ultimo = novoNo;
-    } else {
-        matriculasSalvas.ultimo->proximo = novoNo;
-        matriculasSalvas.ultimo = novoNo;
-    }
-}
-
-// Função para carregar a última matrícula salva
-int carregarUltimaMatricula() {
-    FILE *arquivo;
-    arquivo = fopen("ultima_matricula.txt", "r");
-    if (arquivo == NULL) {
-        return 0; // Se o arquivo não existir, retorna 0
-    }
-
-    int ultimaMatricula;
-    fscanf(arquivo, "%d", &ultimaMatricula);
-    fclose(arquivo);
-
-    return ultimaMatricula;
-}
-
-// Função para salvar a última matrícula utilizada
-void salvarUltimaMatricula(int matricula) {
-    FILE *arquivo;
-    arquivo = fopen("ultima_matricula.txt", "w");
-    if (arquivo == NULL) {
-        printf("Erro ao abrir o arquivo para escrita.\n");
-        return;
-    }
-
-    fprintf(arquivo, "%d", matricula);
-    fclose(arquivo);
-}
-
-// Função para carregar as matrículas salvas
+// FunÃ§Ã£o para carregar as matrÃ­culas salvas
 void carregarMatriculasSalvas(Lista *listaAlunos) {
     FILE *arquivo;
     arquivo = fopen("matriculas.txt", "r");
@@ -430,9 +373,11 @@ void carregarMatriculasSalvas(Lista *listaAlunos) {
 
     int matricula;
     char nome[50];
+    int idCurso;
+    bool pagamento;
 
-    while (fscanf(arquivo, "%d %s", &matricula, nome) != EOF) {
-        // Criar novo nó com os dados carregados
+    while (fscanf(arquivo, "%d %s %d %d", &matricula, &nome, &idCurso, &pagamento) != EOF) {
+        // Criar novo nÃ³ com os dados carregados
         No *novoNo = (No *)malloc(sizeof(No));
         if (novoNo == NULL) {
             printf("\nErro: Memoria insuficiente!\n");
@@ -441,11 +386,11 @@ void carregarMatriculasSalvas(Lista *listaAlunos) {
 
         novoNo->aluno.matricula = matricula;
         strcpy(novoNo->aluno.nome, nome);
-        novoNo->aluno.idCurso = 0; // Atribui 0 como id do curso inicialmente
-        novoNo->aluno.pagamento = false; // Atribui false como pagamento inicialmente
+        novoNo->aluno.idCurso = idCurso; // Atribui 0 como id do curso inicialmente
+        novoNo->aluno.pagamento = pagamento; // Atribui false como pagamento inicialmente
         novoNo->proximo = NULL;
 
-        // Insere o novo nó na lista de alunos
+        // Insere o novo nÃ³ na lista de alunos
         if (listaAlunos->primeiro == NULL) {
             listaAlunos->primeiro = novoNo;
             listaAlunos->ultimo = novoNo;
@@ -459,6 +404,122 @@ void carregarMatriculasSalvas(Lista *listaAlunos) {
 }
 
 void carregarCursosSalvos(Lista *listaCursos) {
-// criar depois função para carregar automaticamnete cursos que foram salvos anteriormente.
+    FILE *arquivo;
+    arquivo = fopen("cursos.txt", "r");
+    if (arquivo == NULL) {
+        printf("Erro ao abrir o arquivo para leitura.\n");
+        return;
+    }
+    
+    int idCurso;
+    char nome[50];
+    char turno[10];
+    int mensalidade;
+    
+    while (fscanf(arquivo, "%d %s %s %d", &idCurso, &nome, &turno, &mensalidade) != EOF) {
+        // Criar novo nÃ³ com os dados carregados
+        No *novoNo = (No *)malloc(sizeof(No));
+        if (novoNo == NULL) {
+            printf("\nErro: Memoria insuficiente!\n");
+            exit(1);
+        }
+
+        novoNo->curso.idCurso = idCurso;
+        strcpy(novoNo->curso.nome, nome);
+        strcpy(novoNo->curso.turno, turno);
+        novoNo->curso.mensalidade = mensalidade;
+        novoNo->proximo = NULL;
+
+        // Insere o novo nÃ³ na lista de alunos
+        if (listaCursos->primeiro == NULL) {
+            listaCursos->primeiro = novoNo;
+            listaCursos->ultimo = novoNo;
+        } else {
+            listaCursos->ultimo->proximo = novoNo;
+            listaCursos->ultimo = novoNo;
+        }
+    }
+
+    fclose(arquivo);
 }
 
+void efetuarPagamento(Lista *listaAlunos, Lista *listaCursos, int matricula){
+    time_t current_time = time(NULL);
+    No *atual = listaAlunos->primeiro;
+    
+    while (atual != NULL) {
+        if (atual->aluno.matricula == matricula) {
+            atual->aluno.dataMensalidade = *localtime(&current_time);
+            atual->aluno.pagamento = true;
+            No *cursoNode = encontrarCurso(listaCursos, atual->aluno.idCurso);
+            printf("Pagamento de R$%d realizado - %02d-%02d-%02d", cursoNode->curso.mensalidade, atual->aluno.dataMensalidade.tm_mday, atual->aluno.dataMensalidade.tm_mon, atual->aluno.dataMensalidade.tm_year);
+            return;
+        }
+        atual = atual->proximo;
+    }
+}
+
+bool matricularAluno(Lista *listaCursos, Lista *listaAlunos, int matricula, int idCurso){
+	No *cursoNode = encontrarCurso(listaCursos, idCurso);
+	if (cursoNode != NULL) {
+		No *alunoNode = encontrarAluno(listaAlunos, matricula);
+		alunoNode->aluno.idCurso = idCurso;
+		printf("Aluno matriculado em %s", cursoNode->curso.nome);
+		return true;
+	}
+	
+	printf("Curso nao encontrado.");
+	return false;
+}
+
+No* encontrarCurso(Lista *listaCursos, int id) {
+    No *atual = listaCursos->primeiro;
+    while (atual != NULL) {
+        if (atual->curso.idCurso == id) {
+            //printf("ID: %d, Nome: %s, Turno: %s, Mensalidade: %.2f\n", atual->curso.idCurso, atual->curso.nome, atual->curso.turno, atual->curso.mensalidade);
+            return atual;
+        }
+        atual = atual->proximo;
+    }
+    printf("curso nao encontrado\n", id);
+    return NULL; 
+}
+
+No* encontrarAluno(Lista *listaAlunos, int matricula) {
+    No *atual = listaAlunos->primeiro;
+    while (atual != NULL) {
+        if (atual->aluno.matricula == matricula) {
+            //printf("ID: %d, Nome: %s, Turno: %s, Mensalidade: %.2f\n", atual->curso.idCurso, atual->curso.nome, atual->curso.turno, atual->curso.mensalidade);
+            return atual;
+        }
+        atual = atual->proximo;
+    }
+    printf("aluno nao encontrado\n", matricula);
+    return NULL; 
+}
+
+int carregarUltimoId(Lista *lista, int opcao){
+	No *atual = lista->primeiro;
+	switch (opcao){
+		case 1: // aluno
+		    if (atual == NULL) {
+		        return 1; // Se a lista estiver vazia, retorna -1 ou outro valor indicativo de erro
+		    }
+		
+		    while (atual->proximo != NULL) {
+		        atual = atual->proximo;
+		    }
+		    return atual->aluno.matricula + 1;
+		
+		case 2: //curso
+		    if (atual == NULL) {
+		        return 1; // Se a lista estiver vazia, retorna -1 ou outro valor indicativo de erro
+		    }
+		
+		    while (atual->proximo != NULL) {
+		        atual = atual->proximo;
+		    }
+		    return atual->curso.idCurso + 1;
+	}
+	return -1;
+}
