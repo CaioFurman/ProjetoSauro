@@ -75,10 +75,7 @@ int main(void) {
     Lista listaAlunos = {NULL, NULL};
     Lista listaCursos = {NULL, NULL};
 
-    // Carregar matrículas salvas
     carregarMatriculasSalvas(&listaAlunos);
-    
-     // Carregar cursos salvos
     carregarCursosSalvos(&listaCursos);
 
     while (continuar) {
@@ -296,7 +293,7 @@ void cadastrarCurso(Lista *listaCursos) {
     printf("Nome do curso: ");
     getchar(); // Limpar o buffer de entrada antes de usar fgets()
     fgets(novoCurso.nome, sizeof(novoCurso.nome), stdin);
-    novoCurso.nome[strcspn(novoCurso.nome, "\n")] = '\0'; // Remover o caractere de nova linha
+    novoCurso.nome[strcspn(novoCurso.nome, "\n")] = '\0';
 
     printf("Turno do curso: ");
     scanf("%s", novoCurso.turno);
