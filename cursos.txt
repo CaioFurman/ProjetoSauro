@@ -1,2 +1,5 @@
 1 sociologia manha 1345
-2 engenharia noite 4550
+2 medicina noite 4550
+3 arquitetura manha 2345
+4 engenharia tarde 1550
+5 design manha 3440
