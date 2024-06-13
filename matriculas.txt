@@ -1,2 +1,2 @@
-1 caio 0 0
-2 pietro 2 0
+1 pietro 0 13-06-0124 1
+3 rafael 50 00-00-0000 1
